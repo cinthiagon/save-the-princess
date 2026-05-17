@@ -16,6 +16,16 @@
  *   ✔ Correct  → the hero takes one bonus step toward the castle.
  *   ✘ Wrong    → the hero retreats to the safe checkpoint of the tile
  *                (`tile.retreatTo`) and loses a life.
+ *
+ * AUTHORING RULE — every challenge MUST have EXACTLY one correct option.
+ * For past-tense prompts that means the sentence has to lock BOTH
+ * dimensions independently:
+ *   • Number (singular vs plural) → use a / one / many / two / lots of…
+ *   • Polarity (positive vs negative) → use Yes! / lots of them / many
+ *     for positive; any / Phew! for negative. ("No <noun>" keeps the
+ *     verb POSITIVE because the negation is on the noun, not the verb,
+ *     so "there was no roof" is correct and "there wasn't no roof" is
+ *     a double negative.)
  */
 import type { Challenge } from '@/types/game';
 
@@ -61,8 +71,7 @@ export const CHALLENGES: Challenge[] = [
     category: 'directions',
     type: 'multiple-choice',
     prompt:
-      'A friendly KNIGHT stands on the grass, just outside the village. The knight is __________ the village hall.',
-    hint: 'The knight is facing the village hall door.',
+      'A friendly KNIGHT stands on the grass, FACING the village hall door. The knight is __________ the village hall.',
     options: [
       { id: 'a', text: 'in front of' },
       { id: 'b', text: 'inside' },
@@ -70,7 +79,7 @@ export const CHALLENGES: Challenge[] = [
       { id: 'd', text: 'between' },
     ],
     correctId: 'a',
-    explanation: 'Standing outside and facing the building → "in front of" it.',
+    explanation: 'Standing outside and facing a building → "in front of" it.',
   },
 
   // ─── 7 · Village hall ────────────────────────────────────────────────
@@ -113,12 +122,12 @@ export const CHALLENGES: Challenge[] = [
     category: 'location',
     type: 'multiple-choice',
     prompt:
-      'You are at the library. The bakery is on your LEFT and the fountain is just AHEAD. The library is __________ the bakery and the fountain.',
+      'You are at the library. The bakery is on your LEFT and the fountain is on your RIGHT — the library is right in the MIDDLE. The library is __________ the bakery and the fountain.',
     options: [
       { id: 'a', text: 'between' },
       { id: 'b', text: 'opposite' },
       { id: 'c', text: 'inside' },
-      { id: 'd', text: 'next to' },
+      { id: 'd', text: 'in front of' },
     ],
     correctId: 'a',
     explanation: 'When a place is in the middle of two other places, it is "between" them.',
@@ -130,7 +139,8 @@ export const CHALLENGES: Challenge[] = [
     category: 'past',
     type: 'multiple-choice',
     prompt:
-      'You stop at the village FOUNTAIN. Water is flowing! Long ago, there __________ a small wishing well in this same spot — only ONE!',
+      'You stop at the village FOUNTAIN. Long ago, this same spot had a small wishing well. Yes — there __________ a wishing well here, just ONE!',
+    hint: 'Singular noun ("a wishing well") and the sentence affirms it existed.',
     options: [
       { id: 'a', text: 'was' },
       { id: 'b', text: 'were' },
@@ -138,7 +148,7 @@ export const CHALLENGES: Challenge[] = [
       { id: 'd', text: 'weren\u2019t' },
     ],
     correctId: 'a',
-    explanation: 'One wishing well (singular) → "there was".',
+    explanation: 'One wishing well (singular) + the sentence affirms it existed → "there was".',
   },
 
   // ─── 12 · Market ─────────────────────────────────────────────────────
@@ -147,7 +157,8 @@ export const CHALLENGES: Challenge[] = [
     category: 'past',
     type: 'multiple-choice',
     prompt:
-      'The MARKET stall is full of apples, pumpkins and bread. Yesterday, there __________ MANY fresh apples on this table!',
+      'The MARKET stall is bursting with fruit today! Yesterday, the basket was FULL too — there __________ many fresh apples on this table, LOTS of them!',
+    hint: 'Plural noun ("apples") and the sentence affirms there were lots.',
     options: [
       { id: 'a', text: 'was' },
       { id: 'b', text: 'were' },
@@ -155,7 +166,7 @@ export const CHALLENGES: Challenge[] = [
       { id: 'd', text: 'weren\u2019t' },
     ],
     correctId: 'b',
-    explanation: 'Many apples (plural) → "there were".',
+    explanation: 'Many apples (plural) + a positive affirmation ("LOTS of them") → "there were".',
   },
 
   // ─── 14 · Path leaving the village ───────────────────────────────────
@@ -198,7 +209,8 @@ export const CHALLENGES: Challenge[] = [
     category: 'past',
     type: 'multiple-choice',
     prompt:
-      'You see many footprints on the wet path. Yesterday, there __________ many travellers walking here.',
+      'Footprints cover the wet path everywhere! Yesterday there __________ many travellers walking here — LOTS of them!',
+    hint: 'Plural noun ("travellers") and the sentence affirms there were lots.',
     options: [
       { id: 'a', text: 'was' },
       { id: 'b', text: 'were' },
@@ -206,7 +218,7 @@ export const CHALLENGES: Challenge[] = [
       { id: 'd', text: 'weren\u2019t' },
     ],
     correctId: 'b',
-    explanation: 'Many travellers → plural → "there were".',
+    explanation: 'Plural ("travellers") + a positive affirmation ("LOTS of them") → "there were".',
   },
 
   // ─── 19 · Path turns up toward the mountains ─────────────────────────
@@ -232,7 +244,8 @@ export const CHALLENGES: Challenge[] = [
     category: 'past',
     type: 'multiple-choice',
     prompt:
-      'Careful! A red DRAGON is sleeping in the mountains. Long ago, there __________ TWO dragons here — be brave!',
+      'Careful! A red DRAGON is sleeping in the mountains. Long ago this peak even had TWO dragons living on top — yes, there __________ TWO of them up here!',
+    hint: 'Plural noun ("two of them") and "yes" confirms they existed.',
     options: [
       { id: 'a', text: 'was' },
       { id: 'b', text: 'were' },
@@ -240,7 +253,7 @@ export const CHALLENGES: Challenge[] = [
       { id: 'd', text: 'weren\u2019t' },
     ],
     correctId: 'b',
-    explanation: 'Two dragons → plural → "there were".',
+    explanation: 'Two dragons (plural) + a positive affirmation ("yes…TWO of them") → "there were".',
   },
 
   // ─── 23 · Dragon "next to" the path ──────────────────────────────────
@@ -267,7 +280,8 @@ export const CHALLENGES: Challenge[] = [
     category: 'past',
     type: 'multiple-choice',
     prompt:
-      'You can see the CASTLE towers! In old times, there __________ no roof on the smaller tower.',
+      'Look at the CASTLE — the smaller tower has no roof! Long ago it was the same: there __________ ANY roof on it back then.',
+    hint: 'Singular noun ("roof") + "any" forces the negative form.',
     options: [
       { id: 'a', text: 'was' },
       { id: 'b', text: 'were' },
@@ -275,7 +289,7 @@ export const CHALLENGES: Challenge[] = [
       { id: 'd', text: 'weren\u2019t' },
     ],
     correctId: 'c',
-    explanation: 'Negative + singular ("no roof") → "there wasn\u2019t".',
+    explanation: 'Singular noun ("roof") + "any" → negative verb → "there wasn\u2019t".',
   },
 
   // ─── 27 · Castle gates ───────────────────────────────────────────────
