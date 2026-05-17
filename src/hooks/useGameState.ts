@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { storage, STORAGE_KEYS } from '@/services/storage';
 import { BOARD } from '@/data/board';
-import { CHALLENGES } from '@/data/challenges';
+import { CHALLENGES, getChallengeById } from '@/data/challenges';
 import { ACHIEVEMENTS } from '@/data/achievements';
 import type {
   Achievement,
@@ -32,12 +32,29 @@ export type GameStatus =
   | 'victory'
   | 'gameover';
 
+/**
+ * Description of what will happen to the player when they close the
+ * current challenge feedback. The UI uses this to communicate the
+ * spatial consequence of the answer ("+1 step forward" / "Back to the
+ * bridge").
+ */
+export interface ChallengeOutcome {
+  type: 'advance' | 'retreat' | 'stay';
+  /** Tile index the player will be at when the feedback closes. */
+  toIndex: number;
+  /** Number of tiles forward (advance) or backward (retreat). */
+  delta: number;
+  /** Friendly label shown on the modal feedback. */
+  label: string;
+}
+
 export interface GameStateView extends PlayerProgress {
   status: GameStatus;
   diceValue: number | null;
   pendingMoves: number;
   currentChallenge: Challenge | null;
   lastAnswerCorrect: boolean | null;
+  pendingOutcome: ChallengeOutcome | null;
   streak: number;
   unlocked: Achievement[];
   /** Position progress, 0..1, useful for the progress bar. */
@@ -78,6 +95,7 @@ export const useGameState = (initialAvatar: AvatarId) => {
   const [pendingMoves, setPendingMoves] = useState(0);
   const [currentChallenge, setCurrentChallenge] = useState<Challenge | null>(null);
   const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null);
+  const [pendingOutcome, setPendingOutcome] = useState<ChallengeOutcome | null>(null);
   const [streak, setStreak] = useState(0);
   const [unlocked, setUnlocked] = useState<Achievement[]>(() =>
     storage.get<Achievement[]>(STORAGE_KEYS.achievements, []),
@@ -145,25 +163,12 @@ export const useGameState = (initialAvatar: AvatarId) => {
     }
 
     if (tile.challenge) {
-      // Pick a category that fits the tile context, but always allow at
-      // least one past-tense slot every few tiles so the three lesson
-      // areas are evenly covered through the journey.
-      const villageTypes = new Set(['bakery', 'library', 'fountain', 'market', 'village', 'house']);
-      const isVillage = villageTypes.has(tile.type);
-      const everyThird = progress.position % 3 === 0;
-
-      let candidates: Challenge[];
-      if (everyThird) {
-        candidates = CHALLENGES.filter((c) => c.category === 'past');
-      } else if (isVillage) {
-        candidates = CHALLENGES.filter(
-          (c) => c.category === 'location' || c.category === 'directions',
-        );
-      } else {
-        candidates = CHALLENGES.filter((c) => c.category === 'directions');
-      }
-      const list = candidates.length > 0 ? candidates : CHALLENGES;
-      const choice = list[Math.floor(rngRef.current() * list.length)];
+      // Pick the tile's bespoke contextual challenge (e.g., "the dragon
+      // is next to this bridge"). Fall back to a random challenge if a
+      // tile has no specific id.
+      const contextual = tile.challengeId ? getChallengeById(tile.challengeId) : undefined;
+      const choice =
+        contextual ?? CHALLENGES[Math.floor(rngRef.current() * CHALLENGES.length)];
       setCurrentChallenge(choice);
       setStatus('challenge');
     } else {
@@ -179,8 +184,23 @@ export const useGameState = (initialAvatar: AvatarId) => {
       setLastAnswerCorrect(correct);
       setStatus('feedback');
 
+      const here = progress.position;
+      const tile = BOARD.tiles[here];
+
       if (correct) {
         audio.play('correct');
+        // ✔ Bonus advance: take one extra step toward the castle.
+        const nextIndex = Math.min(BOARD.total - 1, here + 1);
+        const delta = nextIndex - here;
+        setPendingOutcome({
+          type: delta > 0 ? 'advance' : 'stay',
+          toIndex: nextIndex,
+          delta,
+          label:
+            delta > 0
+              ? `Great! You move +${delta} step forward.`
+              : 'Great! You stay safe.',
+        });
         setProgress((p) => {
           const newStreak = streak + 1;
           const earnedStar = newStreak > 0 && newStreak % STAR_THRESHOLD === 0;
@@ -196,7 +216,6 @@ export const useGameState = (initialAvatar: AvatarId) => {
         setStreak((s) => {
           const ns = s + 1;
           if (ns >= 3) unlockAchievement('good-listener');
-          // Counts by category for the two themed achievements.
           if (currentChallenge.category === 'directions') {
             const total = CHALLENGES_DIRECTIONS_COUNT.get();
             CHALLENGES_DIRECTIONS_COUNT.inc();
@@ -210,6 +229,18 @@ export const useGameState = (initialAvatar: AvatarId) => {
         });
       } else {
         audio.play('wrong');
+        // ✘ Retreat: fall back to the tile's safe checkpoint.
+        const safe = Math.max(0, Math.min(here, tile?.retreatTo ?? Math.max(0, here - 2)));
+        const delta = here - safe;
+        setPendingOutcome({
+          type: delta > 0 ? 'retreat' : 'stay',
+          toIndex: safe,
+          delta,
+          label:
+            delta > 0
+              ? `Move back ${delta} step${delta === 1 ? '' : 's'} to a safe place.`
+              : 'You stay where you are. Try the next one!',
+        });
         setProgress((p) => ({
           ...p,
           lives: Math.max(0, p.lives - 1),
@@ -218,20 +249,34 @@ export const useGameState = (initialAvatar: AvatarId) => {
         setStreak(0);
       }
     },
-    [currentChallenge, status, streak, unlockAchievement],
+    [currentChallenge, status, streak, progress.position, unlockAchievement],
   );
 
   const closeChallenge = useCallback(() => {
     if (status !== 'feedback') return;
+    // Apply the pending outcome: actually move the avatar on the board.
+    const outcome = pendingOutcome;
     setCurrentChallenge(null);
     setLastAnswerCorrect(null);
+    setPendingOutcome(null);
     setDiceValue(null);
+
+    if (outcome && outcome.type !== 'stay') {
+      setProgress((p) => ({ ...p, position: outcome.toIndex }));
+    }
+
     if (progress.lives <= 0) {
       setStatus('gameover');
       return;
     }
+    // If the bonus step lands on the castle, victory!
+    if (outcome && outcome.toIndex >= BOARD.total - 1) {
+      setStatus('victory');
+      audio.play('victory');
+      return;
+    }
     setStatus('idle');
-  }, [status, progress.lives]);
+  }, [status, pendingOutcome, progress.lives]);
 
   const reset = useCallback(
     (avatarId: AvatarId) => {
@@ -241,6 +286,7 @@ export const useGameState = (initialAvatar: AvatarId) => {
       setPendingMoves(0);
       setCurrentChallenge(null);
       setLastAnswerCorrect(null);
+      setPendingOutcome(null);
       setStreak(0);
       CHALLENGES_DIRECTIONS_COUNT.reset();
       CHALLENGES_PAST_COUNT.reset();
@@ -256,11 +302,12 @@ export const useGameState = (initialAvatar: AvatarId) => {
       pendingMoves,
       currentChallenge,
       lastAnswerCorrect,
+      pendingOutcome,
       streak,
       unlocked,
       progress: progress.position / (BOARD.total - 1),
     }),
-    [progress, status, diceValue, pendingMoves, currentChallenge, lastAnswerCorrect, streak, unlocked],
+    [progress, status, diceValue, pendingMoves, currentChallenge, lastAnswerCorrect, pendingOutcome, streak, unlocked],
   );
 
   // Unlock the final achievement when victory is reached.

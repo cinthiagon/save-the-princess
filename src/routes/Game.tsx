@@ -194,6 +194,7 @@ export const Game = () => {
         open={challengeOpen}
         challenge={state.currentChallenge}
         lastAnswerCorrect={state.lastAnswerCorrect}
+        outcome={state.pendingOutcome}
         feedbackMode={state.status === 'feedback'}
         onAnswer={actions.answerChallenge}
         onContinue={actions.closeChallenge}

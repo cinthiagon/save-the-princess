@@ -4,11 +4,14 @@
  */
 import { AnimatePresence, motion } from 'framer-motion';
 import type { Challenge } from '@/types/game';
+import type { ChallengeOutcome } from '@/hooks/useGameState';
 
 interface ChallengeModalProps {
   open: boolean;
   challenge: Challenge | null;
   lastAnswerCorrect: boolean | null;
+  /** Movement consequence (advance / retreat / stay) for the feedback. */
+  outcome: ChallengeOutcome | null;
   /** Disable buttons until the user closes the feedback. */
   feedbackMode: boolean;
   onAnswer: (optionId: string) => void;
@@ -22,7 +25,7 @@ const categoryLabel: Record<Challenge['category'], string> = {
 };
 
 export const ChallengeModal = ({
-  open, challenge, lastAnswerCorrect, feedbackMode,
+  open, challenge, lastAnswerCorrect, outcome, feedbackMode,
   onAnswer, onContinue,
 }: ChallengeModalProps) => {
   return (
@@ -109,9 +112,23 @@ export const ChallengeModal = ({
                   aria-live="polite"
                 >
                   <p className="font-bold">
-                    {lastAnswerCorrect ? 'Great job! 🌟' : 'Not quite — keep going!'}
+                    {lastAnswerCorrect ? 'Great job!' : 'Not quite — keep going!'}
                   </p>
                   <p className="mt-1 text-forest-700/90">{challenge.explanation}</p>
+                  {outcome && outcome.type !== 'stay' && (
+                    <p
+                      className={`mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 font-pixel text-[10px] uppercase ${
+                        outcome.type === 'advance'
+                          ? 'bg-forest-500 text-parchment-50'
+                          : 'bg-crimson-500 text-parchment-50'
+                      }`}
+                    >
+                      <span aria-hidden="true">
+                        {outcome.type === 'advance' ? '▶' : '◀'}
+                      </span>
+                      {outcome.label}
+                    </p>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>

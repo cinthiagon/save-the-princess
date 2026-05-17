@@ -8,421 +8,61 @@
  *  • Past-tense structures (there was / there wasn't / there were /
  *    there weren't)
  *
- * All sentences use simple, friendly English suitable for elementary
- * school learners.
+ * EACH CHALLENGE IS CONTEXTUAL — the prompt narrates what the player
+ * can see at the current tile (the dragon next to the bridge, the
+ * fountain in the middle of the square…). This makes the lesson
+ * concrete and ties the answer directly to the player's progression:
+ *
+ *   ✔ Correct  → the hero takes one bonus step toward the castle.
+ *   ✘ Wrong    → the hero retreats to the safe checkpoint of the tile
+ *                (`tile.retreatTo`) and loses a life.
  */
 import type { Challenge } from '@/types/game';
 
 export const CHALLENGES: Challenge[] = [
-  // ───────────────────────── DIRECTIONS ─────────────────────────
+  // ─── 2 · Forest path ─────────────────────────────────────────────────
   {
-    id: 'dir-001',
+    id: 'ctx-forest-path',
     category: 'directions',
     type: 'multiple-choice',
     prompt:
-      'You see a bridge in front of you. The path turns to the right after the bridge. What do you do?',
+      'Tall trees stand on your LEFT and on your RIGHT — the forest is all around you. To follow the path you should go…',
+    hint: 'Look at the path: it continues forward.',
     options: [
-      { id: 'a', text: 'Go straight and then turn right.' },
-      { id: 'b', text: 'Turn left before the bridge.' },
-      { id: 'c', text: 'Stop and go back home.' },
-      { id: 'd', text: 'Jump into the river.' },
+      { id: 'a', text: 'straight ahead' },
+      { id: 'b', text: 'backwards, to home' },
+      { id: 'c', text: 'into the trees on the left' },
+      { id: 'd', text: 'into the trees on the right' },
     ],
     correctId: 'a',
-    explanation: 'You go straight first, then you turn right after the bridge.',
-  },
-  {
-    id: 'dir-002',
-    category: 'directions',
-    type: 'multiple-choice',
-    prompt: 'The bakery is __________ the library. They share a wall!',
-    hint: 'They are very close to each other.',
-    options: [
-      { id: 'a', text: 'between' },
-      { id: 'b', text: 'next to' },
-      { id: 'c', text: 'opposite' },
-      { id: 'd', text: 'on the corner' },
-    ],
-    correctId: 'b',
-    explanation: 'When two places share a wall, we say they are "next to" each other.',
-  },
-  {
-    id: 'dir-003',
-    category: 'directions',
-    type: 'multiple-choice',
-    prompt: 'The fountain is __________ the bakery and the library.',
-    options: [
-      { id: 'a', text: 'opposite' },
-      { id: 'b', text: 'next to' },
-      { id: 'c', text: 'between' },
-      { id: 'd', text: 'on the corner' },
-    ],
-    correctId: 'c',
-    explanation: 'When something is in the middle of two places, it is "between" them.',
-  },
-  {
-    id: 'dir-004',
-    category: 'directions',
-    type: 'multiple-choice',
-    prompt: 'The market is on the other side of the street. We say it is __________ the village hall.',
-    options: [
-      { id: 'a', text: 'between' },
-      { id: 'b', text: 'next to' },
-      { id: 'c', text: 'opposite' },
-      { id: 'd', text: 'on the corner' },
-    ],
-    correctId: 'c',
-    explanation: '"Opposite" means on the other side, facing it.',
-  },
-  {
-    id: 'dir-005',
-    category: 'directions',
-    type: 'multiple-choice',
-    prompt: 'You reach a roundabout. To go to the castle you must take the __________ exit.',
-    hint: 'A roundabout is a round road with several exits.',
-    options: [
-      { id: 'a', text: 'first' },
-      { id: 'b', text: 'second' },
-      { id: 'c', text: 'third' },
-      { id: 'd', text: 'fourth' },
-    ],
-    correctId: 'b',
-    explanation: 'At a roundabout, count the exits in order. The castle is on the second exit today!',
-  },
-  {
-    id: 'dir-006',
-    category: 'directions',
-    type: 'multiple-choice',
-    prompt: 'Turn left at the bridge and go straight. The forest is __________ you.',
-    options: [
-      { id: 'a', text: 'in front of' },
-      { id: 'b', text: 'behind' },
-      { id: 'c', text: 'next to' },
-      { id: 'd', text: 'opposite' },
-    ],
-    correctId: 'a',
-    explanation: 'When you go straight ahead, the place ahead of you is "in front of" you.',
-  },
-  {
-    id: 'dir-007',
-    category: 'directions',
-    type: 'true-false',
-    prompt: 'Listen: "Turn right and then go straight." This means the same as "go straight and then turn right".',
-    options: [
-      { id: 'true', text: 'True' },
-      { id: 'false', text: 'False' },
-    ],
-    correctId: 'false',
-    explanation: 'Order matters! "Turn right and then go straight" is different from doing it in the opposite order.',
-  },
-  {
-    id: 'dir-008',
-    category: 'directions',
-    type: 'multiple-choice',
-    prompt: 'A small house is __________. It sits where two streets meet.',
-    options: [
-      { id: 'a', text: 'next to the river' },
-      { id: 'b', text: 'on the corner' },
-      { id: 'c', text: 'between the trees' },
-      { id: 'd', text: 'opposite the castle' },
-    ],
-    correctId: 'b',
-    explanation: 'A place where two streets meet is called "the corner".',
-  },
-  {
-    id: 'dir-009',
-    category: 'directions',
-    type: 'multiple-choice',
-    prompt: 'Aria looks at the map. The river is on her left. To follow the river she should walk __________.',
-    options: [
-      { id: 'a', text: 'opposite' },
-      { id: 'b', text: 'straight ahead' },
-      { id: 'c', text: 'to the right' },
-      { id: 'd', text: 'backwards' },
-    ],
-    correctId: 'b',
-    explanation: 'If the river runs beside her, she keeps going straight to follow it.',
-  },
-  {
-    id: 'dir-010',
-    category: 'directions',
-    type: 'true-false',
-    prompt: '"Next to" means very close, almost touching the other place.',
-    options: [
-      { id: 'true', text: 'True' },
-      { id: 'false', text: 'False' },
-    ],
-    correctId: 'true',
-    explanation: 'Yes! "Next to" means right beside, very close to.',
+    explanation: 'When the path continues forward, you "go straight ahead".',
   },
 
-  // ───────────────────────── LOCATION ─────────────────────────
+  // ─── 4 · First bridge over the river ─────────────────────────────────
   {
-    id: 'loc-001',
-    category: 'location',
-    type: 'multiple-choice',
-    prompt: 'Look at the village. The bakery is next to the library. So the library is __________ the bakery.',
-    options: [
-      { id: 'a', text: 'between' },
-      { id: 'b', text: 'opposite' },
-      { id: 'c', text: 'next to' },
-      { id: 'd', text: 'on top of' },
-    ],
-    correctId: 'c',
-    explanation: '"Next to" works both ways: A next to B = B next to A.',
-  },
-  {
-    id: 'loc-002',
-    category: 'location',
-    type: 'multiple-choice',
-    prompt: 'The fountain is in the middle of the village square. So the fountain is __________ the houses around it.',
-    options: [
-      { id: 'a', text: 'in the middle of' },
-      { id: 'b', text: 'on the corner of' },
-      { id: 'c', text: 'opposite to' },
-      { id: 'd', text: 'below' },
-    ],
-    correctId: 'a',
-    explanation: 'When something is at the center, it is "in the middle of" the area.',
-  },
-  {
-    id: 'loc-003',
-    category: 'location',
-    type: 'multiple-choice',
-    prompt: 'The mountains are far away, behind the castle. The castle is __________ the mountains and you.',
-    options: [
-      { id: 'a', text: 'next to' },
-      { id: 'b', text: 'between' },
-      { id: 'c', text: 'opposite' },
-      { id: 'd', text: 'inside' },
-    ],
-    correctId: 'b',
-    explanation: 'The castle stands "between" you and the mountains.',
-  },
-  {
-    id: 'loc-004',
-    category: 'location',
-    type: 'true-false',
-    prompt: 'If the market is opposite the bakery, you must cross the street to go from one to the other.',
-    options: [
-      { id: 'true', text: 'True' },
-      { id: 'false', text: 'False' },
-    ],
-    correctId: 'true',
-    explanation: '"Opposite" means on the other side, so you cross the street.',
-  },
-  {
-    id: 'loc-005',
-    category: 'location',
-    type: 'multiple-choice',
-    prompt: 'The little house is __________: it has a street on its left and a street in front of it.',
-    options: [
-      { id: 'a', text: 'between two parks' },
-      { id: 'b', text: 'on the corner' },
-      { id: 'c', text: 'opposite the castle' },
-      { id: 'd', text: 'inside the forest' },
-    ],
-    correctId: 'b',
-    explanation: 'A house with streets on two sides sits "on the corner".',
-  },
-  {
-    id: 'loc-006',
-    category: 'location',
-    type: 'multiple-choice',
-    prompt: 'A friendly cat sleeps __________ the bakery door. It is right by the door.',
-    options: [
-      { id: 'a', text: 'next to' },
-      { id: 'b', text: 'opposite' },
-      { id: 'c', text: 'between' },
-      { id: 'd', text: 'far from' },
-    ],
-    correctId: 'a',
-    explanation: 'Right by the door = "next to" the door.',
-  },
-
-  // ───────────────────────── PAST: there was / there were ─────────────────────────
-  {
-    id: 'past-001',
-    category: 'past',
-    type: 'multiple-choice',
-    prompt: 'Yesterday, __________ a market near the castle.',
-    options: [
-      { id: 'a', text: 'there was' },
-      { id: 'b', text: 'there were' },
-      { id: 'c', text: 'there wasn\u2019t' },
-      { id: 'd', text: 'there weren\u2019t' },
-    ],
-    correctId: 'a',
-    explanation: 'We use "there was" with one (singular) thing — a market.',
-  },
-  {
-    id: 'past-002',
-    category: 'past',
-    type: 'multiple-choice',
-    prompt: 'Last week, __________ many flowers in the village square.',
-    options: [
-      { id: 'a', text: 'there was' },
-      { id: 'b', text: 'there were' },
-      { id: 'c', text: 'there wasn\u2019t' },
-      { id: 'd', text: 'there weren\u2019t' },
-    ],
-    correctId: 'b',
-    explanation: '"There were" is for plural things — many flowers.',
-  },
-  {
-    id: 'past-003',
-    category: 'past',
-    type: 'multiple-choice',
-    prompt: 'Yesterday, __________ any trees near the river. It was empty!',
-    options: [
-      { id: 'a', text: 'there was' },
-      { id: 'b', text: 'there were' },
-      { id: 'c', text: 'there wasn\u2019t' },
-      { id: 'd', text: 'there weren\u2019t' },
-    ],
-    correctId: 'd',
-    explanation: 'Negative + plural ("trees") → "there weren\u2019t".',
-  },
-  {
-    id: 'past-004',
-    category: 'past',
-    type: 'multiple-choice',
-    prompt: 'On Monday, __________ a baker in the bakery. The shop was closed.',
-    options: [
-      { id: 'a', text: 'there was' },
-      { id: 'b', text: 'there were' },
-      { id: 'c', text: 'there wasn\u2019t' },
-      { id: 'd', text: 'there weren\u2019t' },
-    ],
-    correctId: 'c',
-    explanation: 'Negative + singular ("a baker") → "there wasn\u2019t".',
-  },
-  {
-    id: 'past-005',
-    category: 'past',
-    type: 'true-false',
-    prompt: '"There were a princess in the castle." — Is this sentence correct?',
-    options: [
-      { id: 'true', text: 'True' },
-      { id: 'false', text: 'False' },
-    ],
-    correctId: 'false',
-    explanation: 'No. With one princess we say "There was a princess in the castle."',
-  },
-  {
-    id: 'past-006',
-    category: 'past',
-    type: 'multiple-choice',
-    prompt: 'Choose the correct sentence about the past.',
-    options: [
-      { id: 'a', text: 'There was three knights in the forest.' },
-      { id: 'b', text: 'There were three knights in the forest.' },
-      { id: 'c', text: 'There were a knight in the forest.' },
-      { id: 'd', text: 'There weren\u2019t a knight in the forest.' },
-    ],
-    correctId: 'b',
-    explanation: '"There were" goes with plural nouns like "three knights".',
-  },
-  {
-    id: 'past-007',
-    category: 'past',
-    type: 'multiple-choice',
-    prompt: 'Long ago, __________ a small bridge over the river.',
-    options: [
-      { id: 'a', text: 'there was' },
-      { id: 'b', text: 'there were' },
-      { id: 'c', text: 'there wasn\u2019t' },
-      { id: 'd', text: 'there weren\u2019t' },
-    ],
-    correctId: 'a',
-    explanation: 'One bridge (singular) → "there was".',
-  },
-  {
-    id: 'past-008',
-    category: 'past',
-    type: 'multiple-choice',
-    prompt: 'Yesterday, __________ any dragons in the village. Phew!',
-    options: [
-      { id: 'a', text: 'there was' },
-      { id: 'b', text: 'there were' },
-      { id: 'c', text: 'there wasn\u2019t' },
-      { id: 'd', text: 'there weren\u2019t' },
-    ],
-    correctId: 'd',
-    explanation: 'Plural + negative → "there weren\u2019t". (We use "any" in negatives.)',
-  },
-  {
-    id: 'past-009',
-    category: 'past',
-    type: 'true-false',
-    prompt: '"There wasn\u2019t any bread at the bakery yesterday." — Is the grammar correct?',
-    options: [
-      { id: 'true', text: 'True' },
-      { id: 'false', text: 'False' },
-    ],
-    correctId: 'true',
-    explanation: 'Yes! "Bread" is uncountable, so we use "there wasn\u2019t any bread".',
-  },
-  {
-    id: 'past-010',
-    category: 'past',
-    type: 'multiple-choice',
-    prompt: 'Look at the picture: yesterday, __________ two horses next to the castle gate.',
-    options: [
-      { id: 'a', text: 'there was' },
-      { id: 'b', text: 'there were' },
-      { id: 'c', text: 'there wasn\u2019t' },
-      { id: 'd', text: 'there weren\u2019t' },
-    ],
-    correctId: 'b',
-    explanation: 'Two horses are plural → "there were".',
-  },
-  {
-    id: 'past-011',
-    category: 'past',
-    type: 'multiple-choice',
-    prompt: 'Long ago, __________ a friendly wizard near the village.',
-    options: [
-      { id: 'a', text: 'there was' },
-      { id: 'b', text: 'there were' },
-      { id: 'c', text: 'there wasn\u2019t' },
-      { id: 'd', text: 'there weren\u2019t' },
-    ],
-    correctId: 'a',
-    explanation: 'One wizard (singular) → "there was".',
-  },
-  {
-    id: 'past-012',
-    category: 'past',
-    type: 'multiple-choice',
-    prompt: 'Last summer, __________ two brave knights at the bridge.',
-    options: [
-      { id: 'a', text: 'there was' },
-      { id: 'b', text: 'there were' },
-      { id: 'c', text: 'there wasn\u2019t' },
-      { id: 'd', text: 'there weren\u2019t' },
-    ],
-    correctId: 'b',
-    explanation: 'Two knights → plural → "there were".',
-  },
-  {
-    id: 'dir-011',
+    id: 'ctx-bridge-first',
     category: 'directions',
     type: 'multiple-choice',
-    prompt: 'A red dragon is sleeping in the mountains, on the right side of the castle. The dragon is __________ the castle.',
+    prompt:
+      'You are standing on a wooden bridge. The river runs UNDER the bridge. To reach the other side you must walk…',
     options: [
-      { id: 'a', text: 'next to' },
-      { id: 'b', text: 'opposite' },
-      { id: 'c', text: 'between' },
-      { id: 'd', text: 'inside' },
+      { id: 'a', text: 'across the bridge' },
+      { id: 'b', text: 'into the river' },
+      { id: 'c', text: 'opposite of the path' },
+      { id: 'd', text: 'behind the trees' },
     ],
     correctId: 'a',
-    explanation: 'On the right side of the castle = "next to" the castle.',
+    explanation: 'To go from one side to the other side of a bridge, you walk "across".',
   },
+
+  // ─── 6 · Path approaching the village ────────────────────────────────
   {
-    id: 'loc-007',
-    category: 'location',
+    id: 'ctx-village-approach',
+    category: 'directions',
     type: 'multiple-choice',
-    prompt: 'A kind knight stands outside the village. The knight is __________ the village hall.',
+    prompt:
+      'A friendly KNIGHT stands on the grass, just outside the village. The knight is __________ the village hall.',
+    hint: 'The knight is facing the village hall door.',
     options: [
       { id: 'a', text: 'in front of' },
       { id: 'b', text: 'inside' },
@@ -430,14 +70,238 @@ export const CHALLENGES: Challenge[] = [
       { id: 'd', text: 'between' },
     ],
     correctId: 'a',
-    explanation: 'Standing outside, facing the door → "in front of" the building.',
+    explanation: 'Standing outside and facing the building → "in front of" it.',
+  },
+
+  // ─── 7 · Village hall ────────────────────────────────────────────────
+  {
+    id: 'ctx-village-square',
+    category: 'location',
+    type: 'multiple-choice',
+    prompt:
+      'Welcome to the village! The bakery is on your RIGHT and the library is right after it. The bakery is __________ the library.',
+    options: [
+      { id: 'a', text: 'next to' },
+      { id: 'b', text: 'opposite' },
+      { id: 'c', text: 'between' },
+      { id: 'd', text: 'far from' },
+    ],
+    correctId: 'a',
+    explanation: 'When two buildings share a wall (or sit side by side), they are "next to" each other.',
+  },
+
+  // ─── 8 · Bakery ──────────────────────────────────────────────────────
+  {
+    id: 'ctx-bakery',
+    category: 'location',
+    type: 'multiple-choice',
+    prompt:
+      'You can smell fresh bread! You are at the bakery door. The library sits RIGHT BESIDE the bakery. So the library is __________ the bakery.',
+    options: [
+      { id: 'a', text: 'next to' },
+      { id: 'b', text: 'inside' },
+      { id: 'c', text: 'opposite' },
+      { id: 'd', text: 'far from' },
+    ],
+    correctId: 'a',
+    explanation: '"Next to" means right beside, almost touching.',
+  },
+
+  // ─── 9 · Library ─────────────────────────────────────────────────────
+  {
+    id: 'ctx-library',
+    category: 'location',
+    type: 'multiple-choice',
+    prompt:
+      'You are at the library. The bakery is on your LEFT and the fountain is just AHEAD. The library is __________ the bakery and the fountain.',
+    options: [
+      { id: 'a', text: 'between' },
+      { id: 'b', text: 'opposite' },
+      { id: 'c', text: 'inside' },
+      { id: 'd', text: 'next to' },
+    ],
+    correctId: 'a',
+    explanation: 'When a place is in the middle of two other places, it is "between" them.',
+  },
+
+  // ─── 11 · Fountain ───────────────────────────────────────────────────
+  {
+    id: 'ctx-fountain',
+    category: 'past',
+    type: 'multiple-choice',
+    prompt:
+      'You stop at the village FOUNTAIN. Water is flowing! Long ago, there __________ a small wishing well in this same spot — only ONE!',
+    options: [
+      { id: 'a', text: 'was' },
+      { id: 'b', text: 'were' },
+      { id: 'c', text: 'wasn\u2019t' },
+      { id: 'd', text: 'weren\u2019t' },
+    ],
+    correctId: 'a',
+    explanation: 'One wishing well (singular) → "there was".',
+  },
+
+  // ─── 12 · Market ─────────────────────────────────────────────────────
+  {
+    id: 'ctx-market',
+    category: 'past',
+    type: 'multiple-choice',
+    prompt:
+      'The MARKET stall is full of apples, pumpkins and bread. Yesterday, there __________ MANY fresh apples on this table!',
+    options: [
+      { id: 'a', text: 'was' },
+      { id: 'b', text: 'were' },
+      { id: 'c', text: 'wasn\u2019t' },
+      { id: 'd', text: 'weren\u2019t' },
+    ],
+    correctId: 'b',
+    explanation: 'Many apples (plural) → "there were".',
+  },
+
+  // ─── 14 · Path leaving the village ───────────────────────────────────
+  {
+    id: 'ctx-cottage-after',
+    category: 'directions',
+    type: 'multiple-choice',
+    prompt:
+      'A small COTTAGE sits behind you and another bridge is just AHEAD. To reach the next bridge you should…',
+    options: [
+      { id: 'a', text: 'go straight ahead' },
+      { id: 'b', text: 'turn around' },
+      { id: 'c', text: 'walk into the river' },
+      { id: 'd', text: 'climb the cottage roof' },
+    ],
+    correctId: 'a',
+    explanation: 'When the next place is ahead on the path, you "go straight ahead".',
+  },
+
+  // ─── 15 · Second bridge ──────────────────────────────────────────────
+  {
+    id: 'ctx-bridge-second',
+    category: 'directions',
+    type: 'multiple-choice',
+    prompt:
+      'This second bridge feels wobbly! The river flows BELOW you. Walk __________ the bridge slowly to stay safe.',
+    options: [
+      { id: 'a', text: 'across' },
+      { id: 'b', text: 'into' },
+      { id: 'c', text: 'opposite' },
+      { id: 'd', text: 'under' },
+    ],
+    correctId: 'a',
+    explanation: 'You walk "across" a bridge to reach the other side.',
+  },
+
+  // ─── 17 · Path past the bridge ───────────────────────────────────────
+  {
+    id: 'ctx-after-bridge',
+    category: 'past',
+    type: 'multiple-choice',
+    prompt:
+      'You see many footprints on the wet path. Yesterday, there __________ many travellers walking here.',
+    options: [
+      { id: 'a', text: 'was' },
+      { id: 'b', text: 'were' },
+      { id: 'c', text: 'wasn\u2019t' },
+      { id: 'd', text: 'weren\u2019t' },
+    ],
+    correctId: 'b',
+    explanation: 'Many travellers → plural → "there were".',
+  },
+
+  // ─── 19 · Path turns up toward the mountains ─────────────────────────
+  {
+    id: 'ctx-mountain-prep',
+    category: 'directions',
+    type: 'multiple-choice',
+    prompt:
+      'You see tall MOUNTAINS ahead and the path turns to go UP. To follow the path you must go…',
+    options: [
+      { id: 'a', text: 'up, then to the right' },
+      { id: 'b', text: 'back to the bridge' },
+      { id: 'c', text: 'down into the river' },
+      { id: 'd', text: 'opposite of the mountains' },
+    ],
+    correctId: 'a',
+    explanation: 'The path climbs up and then turns right to reach the castle.',
+  },
+
+  // ─── 21 · Dragon spotted! ────────────────────────────────────────────
+  {
+    id: 'ctx-dragon-spotted',
+    category: 'past',
+    type: 'multiple-choice',
+    prompt:
+      'Careful! A red DRAGON is sleeping in the mountains. Long ago, there __________ TWO dragons here — be brave!',
+    options: [
+      { id: 'a', text: 'was' },
+      { id: 'b', text: 'were' },
+      { id: 'c', text: 'wasn\u2019t' },
+      { id: 'd', text: 'weren\u2019t' },
+    ],
+    correctId: 'b',
+    explanation: 'Two dragons → plural → "there were".',
+  },
+
+  // ─── 23 · Dragon "next to" the path ──────────────────────────────────
+  {
+    id: 'ctx-dragon-next-to',
+    category: 'directions',
+    type: 'multiple-choice',
+    prompt:
+      'There is a DRAGON next to this part of the path — what does "NEXT TO" mean here?',
+    hint: 'The dragon is sleeping right beside you on the right.',
+    options: [
+      { id: 'a', text: 'right beside, very close' },
+      { id: 'b', text: 'very far away' },
+      { id: 'c', text: 'inside the path' },
+      { id: 'd', text: 'on the opposite side of the world' },
+    ],
+    correctId: 'a',
+    explanation: '"Next to" means right beside, almost touching.',
+  },
+
+  // ─── 25 · Castle towers in sight ─────────────────────────────────────
+  {
+    id: 'ctx-castle-tower',
+    category: 'past',
+    type: 'multiple-choice',
+    prompt:
+      'You can see the CASTLE towers! In old times, there __________ no roof on the smaller tower.',
+    options: [
+      { id: 'a', text: 'was' },
+      { id: 'b', text: 'were' },
+      { id: 'c', text: 'wasn\u2019t' },
+      { id: 'd', text: 'weren\u2019t' },
+    ],
+    correctId: 'c',
+    explanation: 'Negative + singular ("no roof") → "there wasn\u2019t".',
+  },
+
+  // ─── 27 · Castle gates ───────────────────────────────────────────────
+  {
+    id: 'ctx-castle-gate',
+    category: 'directions',
+    type: 'multiple-choice',
+    prompt:
+      'The CASTLE GATES are just IN FRONT OF you. The princess is inside! To reach her you must go…',
+    options: [
+      { id: 'a', text: 'straight ahead' },
+      { id: 'b', text: 'backwards' },
+      { id: 'c', text: 'into the forest' },
+      { id: 'd', text: 'up the mountains again' },
+    ],
+    correctId: 'a',
+    explanation: 'Going forward to reach a destination = "go straight ahead".',
   },
 ];
 
-/** Convenience helpers. */
-export const challengesByCategory = (category: Challenge['category']) =>
-  CHALLENGES.filter((c) => c.category === category);
+/** Lookup by id (used by the per-tile pipeline). */
+const BY_ID = new Map<string, Challenge>(CHALLENGES.map((c) => [c.id, c]));
 
+export const getChallengeById = (id: string): Challenge | undefined => BY_ID.get(id);
+
+/** Fallback random pick when a tile has no `challengeId`. */
 export const pickRandomChallenge = (rng: () => number = Math.random): Challenge => {
   return CHALLENGES[Math.floor(rng() * CHALLENGES.length)];
 };

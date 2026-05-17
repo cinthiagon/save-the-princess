@@ -67,6 +67,17 @@ export interface BoardTile {
   reference?: string;
   /** Whether stepping on this tile triggers an educational challenge. */
   challenge: boolean;
+  /**
+   * Index the player retreats to when they answer this tile's challenge
+   * incorrectly (the "safe" checkpoint before the hazard). When omitted
+   * we fall back to `max(0, index - 2)`.
+   */
+  retreatTo?: number;
+  /**
+   * Contextual challenge id (from `TILE_CHALLENGES`) tied to this tile.
+   * When omitted, a random fallback challenge is picked.
+   */
+  challengeId?: string;
 }
 
 export type ChallengeCategory = 'directions' | 'location' | 'past';
