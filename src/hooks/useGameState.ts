@@ -5,6 +5,10 @@
  * Centralized game state with persistence in LocalStorage. The state
  * machine is intentionally simple: idle → rolling → moving →
  * challenge → idle, with a final 'victory' state.
+ *
+ * Movement is strictly monotonic forward. The internal stepOne()
+ * advances `position` by exactly 1 (clamped to the last tile) — never
+ * sideways and never backwards.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { storage, STORAGE_KEYS } from '@/services/storage';
@@ -141,18 +145,23 @@ export const useGameState = (initialAvatar: AvatarId) => {
     }
 
     if (tile.challenge) {
-      // Choose a challenge based on the tile type so it feels contextual.
-      const candidates: Challenge[] =
-        tile.type === 'bakery' || tile.type === 'library' ||
-        tile.type === 'fountain' || tile.type === 'market' ||
-        tile.type === 'village' || tile.type === 'house'
-          ? CHALLENGES.filter((c) => c.category === 'location' || c.category === 'directions')
-          : tile.type === 'bridge' || tile.type === 'path' || tile.type === 'grass' || tile.type === 'forest'
-            ? CHALLENGES.filter((c) => c.category === 'directions')
-            : tile.type === 'river' || tile.type === 'mountain'
-              ? CHALLENGES.filter((c) => c.category === 'past')
-              : CHALLENGES;
+      // Pick a category that fits the tile context, but always allow at
+      // least one past-tense slot every few tiles so the three lesson
+      // areas are evenly covered through the journey.
+      const villageTypes = new Set(['bakery', 'library', 'fountain', 'market', 'village', 'house']);
+      const isVillage = villageTypes.has(tile.type);
+      const everyThird = progress.position % 3 === 0;
 
+      let candidates: Challenge[];
+      if (everyThird) {
+        candidates = CHALLENGES.filter((c) => c.category === 'past');
+      } else if (isVillage) {
+        candidates = CHALLENGES.filter(
+          (c) => c.category === 'location' || c.category === 'directions',
+        );
+      } else {
+        candidates = CHALLENGES.filter((c) => c.category === 'directions');
+      }
       const list = candidates.length > 0 ? candidates : CHALLENGES;
       const choice = list[Math.floor(rngRef.current() * list.length)];
       setCurrentChallenge(choice);

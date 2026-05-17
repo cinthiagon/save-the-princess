@@ -5,7 +5,7 @@
  * Main play screen. React owns the high-level state (HUD, challenges,
  * score, dice value); Phaser owns the pixel-art world rendering.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -32,13 +32,20 @@ export const Game = () => {
   const { state, actions } = useGameState(avatarId);
   const [showIntro, setShowIntro] = useState(true);
 
-  // Walking: while pendingMoves > 0, automatically take one step every ~250ms.
+  // Walking: while pendingMoves > 0, automatically take one step every
+  // ~260ms. We keep stepOne in a ref so the effect only re-runs when
+  // the game's status or remaining moves change (not on every render).
+  const stepOneRef = useRef(actions.stepOne);
+  useEffect(() => {
+    stepOneRef.current = actions.stepOne;
+  }, [actions.stepOne]);
+
   useEffect(() => {
     if (state.status !== 'moving') return;
     if (state.pendingMoves <= 0) return;
-    const id = window.setTimeout(() => actions.stepOne(), 240);
+    const id = window.setTimeout(() => stepOneRef.current(), 260);
     return () => window.clearTimeout(id);
-  }, [state.status, state.pendingMoves, actions]);
+  }, [state.status, state.pendingMoves]);
 
   // Navigate to victory page when finished.
   useEffect(() => {
@@ -81,15 +88,9 @@ export const Game = () => {
       />
 
       <main className="flex-1 px-3 sm:px-5 pb-3 flex flex-col lg:flex-row gap-3">
-        {/* World */}
-        <section
-          className="relative flex-1 rounded-2xl overflow-hidden border-2 border-black/30 shadow-pixel bg-forest-700 min-h-[300px] h-[42vh] sm:h-[52vh] lg:h-auto lg:min-h-[480px]"
-          aria-label="Game world"
-        >
-          <PhaserGame avatarId={avatarId} position={state.position} />
-
-          {/* Overlay HUD on top of the world for small screens */}
-          <div className="absolute top-2 left-2 right-2 pointer-events-none">
+        {/* Left column: HUD strip + Phaser world (stacked) */}
+        <section className="flex-1 flex flex-col gap-2 min-w-0">
+          <div className="panel-pixel-dark p-2 sm:p-3">
             <HUD
               score={state.score}
               stars={state.stars}
@@ -100,21 +101,27 @@ export const Game = () => {
               streak={state.streak}
             />
           </div>
+          <div
+            className="relative rounded-2xl overflow-hidden border-2 border-black/30 shadow-pixel bg-forest-700 min-h-[340px] h-[46vh] sm:h-[58vh] lg:flex-1 lg:min-h-[520px]"
+            aria-label="Game world"
+          >
+            <PhaserGame avatarId={avatarId} position={state.position} />
 
-          {/* Floating message: status */}
-          <AnimatePresence>
-            {state.status === 'moving' && state.pendingMoves > 0 && (
-              <motion.div
-                key="moving"
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="absolute top-20 sm:top-24 left-1/2 -translate-x-1/2 chip"
-              >
-                {state.pendingMoves} step{state.pendingMoves !== 1 ? 's' : ''} left
-              </motion.div>
-            )}
-          </AnimatePresence>
+            {/* Floating message: status */}
+            <AnimatePresence>
+              {state.status === 'moving' && state.pendingMoves > 0 && (
+                <motion.div
+                  key="moving"
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute top-3 left-1/2 -translate-x-1/2 chip"
+                >
+                  {state.pendingMoves} step{state.pendingMoves !== 1 ? 's' : ''} left
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </section>
 
         {/* Side panel */}

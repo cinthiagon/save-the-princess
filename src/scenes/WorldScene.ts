@@ -2,29 +2,45 @@
  * Project developed by Cinthia Gonçalez
  * Educational project for elementary school English students
  *
- * Top-down world scene. Procedurally renders a grid of grass + a path
- * of themed landmarks + the player avatar. Receives commands from the
- * React UI via the game event bus.
+ * Top-down world scene. The whole world is rendered ONCE to a single
+ * composite canvas (forest, mountains, river, bridges, village hall,
+ * bakery, library, fountain, market, houses, castle, dragon, wizard,
+ * knight…) and used as a single Phaser texture. The player avatar is
+ * the only thing that animates on top.
+ *
+ * Movement is target-index driven: when React reports the new path
+ * index, the scene advances ONE STEP at a time toward it. The avatar
+ * therefore can never "skip" a tile or visit a cell that is not on the
+ * path.
  */
 import Phaser from 'phaser';
-import { BOARD, BOARD_PATH } from '@/data/board';
-import { buildTileSheet, buildPrincessSprite } from '@/game/tiles';
+import { BOARD, BOARD_PATH, isPathAdjacent } from '@/data/board';
+import {
+  buildWorldCanvas,
+  buildPrincessSprite,
+  TILE_SIZE as TILE_PX,
+} from '@/game/tiles';
 import { buildAvatarSpriteSheet } from '@/game/sprites';
 import { getAvatarById } from '@/data/avatars';
 import { gameBus, GAME_EVENTS } from '@/game/events';
-import type { AvatarId, TileType } from '@/types/game';
+import type { AvatarId } from '@/types/game';
 
+const WORLD_KEY = 'world-composite';
 const PLAYER_KEY = 'player-sheet';
 const PRINCESS_KEY = 'princess';
 
+const FRAME_KEYS = ['p-idle', 'p-walk', 'p-idle2', 'p-celebrate'] as const;
+
+const STEP_DURATION = 220; // ms per tile
+
 export class WorldScene extends Phaser.Scene {
   private player!: Phaser.GameObjects.Sprite;
-  private playerCol = BOARD_PATH[0].col;
-  private playerRow = BOARD_PATH[0].row;
+  private playerIdleTween?: Phaser.Tweens.Tween;
+  private playerWalkTween?: Phaser.Tweens.Tween;
   private currentIndex = 0;
+  private targetIndex = 0;
   private moving = false;
   private avatarId: AvatarId = 'aria';
-  private tileTextureKeys: Partial<Record<TileType, string>> = {};
   private princess?: Phaser.GameObjects.Image;
 
   constructor() {
@@ -33,53 +49,47 @@ export class WorldScene extends Phaser.Scene {
 
   init(data: { avatarId?: AvatarId; startIndex?: number }) {
     if (data.avatarId) this.avatarId = data.avatarId;
-    if (typeof data.startIndex === 'number') this.currentIndex = data.startIndex;
-    const start = BOARD_PATH[this.currentIndex] ?? BOARD_PATH[0];
-    this.playerCol = start.col;
-    this.playerRow = start.row;
+    const startIndex = Math.min(
+      Math.max(data.startIndex ?? 0, 0),
+      BOARD.total - 1,
+    );
+    this.currentIndex = startIndex;
+    this.targetIndex = startIndex;
+    if (!isPathAdjacent()) {
+      // Programmer-error guard: the data file must remain consistent.
+      // eslint-disable-next-line no-console
+      console.warn('[WorldScene] BOARD_PATH has non-adjacent steps.');
+    }
   }
 
   preload() {
-    // Build a master sheet, then split it into a texture per tile type so
-    // we can place them via simple `add.image`. Nothing is loaded from disk.
-    const { canvas: sheet, index } = buildTileSheet();
-    const tileTypes = Object.keys(index) as TileType[];
-    for (const type of tileTypes) {
-      const key = `tile-${type}`;
-      const c = document.createElement('canvas');
-      c.width = BOARD.tileSize;
-      c.height = BOARD.tileSize;
-      const ctx = c.getContext('2d')!;
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(
-        sheet,
-        index[type] * BOARD.tileSize, 0,
-        BOARD.tileSize, BOARD.tileSize,
-        0, 0,
-        BOARD.tileSize, BOARD.tileSize,
-      );
-      if (this.textures.exists(key)) this.textures.remove(key);
-      this.textures.addCanvas(key, c);
-      this.tileTextureKeys[type] = key;
-    }
+    // 1) Composite world canvas → single texture.
+    const world = buildWorldCanvas({
+      cols: BOARD.cols,
+      rows: BOARD.rows,
+      path: BOARD_PATH,
+      pathTiles: BOARD.tiles.map((t) => ({ type: t.type })),
+      decorations: BOARD.decorations,
+    });
+    if (this.textures.exists(WORLD_KEY)) this.textures.remove(WORLD_KEY);
+    this.textures.addCanvas(WORLD_KEY, world);
 
-    // Player sprite frames
-    this.rebuildPlayerTexture(this.avatarId);
+    // 2) Player sprite frames.
+    this.rebuildPlayerTextures(this.avatarId);
 
-    // Princess sprite
+    // 3) Princess (used at the end).
     if (!this.textures.exists(PRINCESS_KEY)) {
       this.textures.addCanvas(PRINCESS_KEY, buildPrincessSprite(4));
     }
   }
 
-  private rebuildPlayerTexture(avatarId: AvatarId) {
+  private rebuildPlayerTextures(avatarId: AvatarId) {
     const sheet = buildAvatarSpriteSheet(getAvatarById(avatarId), 4);
     if (this.textures.exists(PLAYER_KEY)) this.textures.remove(PLAYER_KEY);
     this.textures.addCanvas(PLAYER_KEY, sheet);
     const frameW = sheet.width / 4;
     const frameH = sheet.height;
-    const frameKeys = ['p-idle', 'p-walk', 'p-idle2', 'p-celebrate'];
-    frameKeys.forEach((k, i) => {
+    FRAME_KEYS.forEach((k, i) => {
       const c = document.createElement('canvas');
       c.width = frameW;
       c.height = frameH;
@@ -92,105 +102,50 @@ export class WorldScene extends Phaser.Scene {
   }
 
   create() {
-    const { tileSize } = BOARD;
-    const world = this.add.container(0, 0);
+    const worldW = BOARD.cols * TILE_PX;
+    const worldH = BOARD.rows * TILE_PX;
 
-    const placeTile = (type: TileType, col: number, row: number) => {
-      const key = this.tileTextureKeys[type];
-      if (!key) return;
-      const img = this.add.image(col * tileSize, row * tileSize, key)
-        .setOrigin(0, 0)
-        .setDisplaySize(tileSize, tileSize);
-      world.add(img);
-    };
+    // World background — one big image.
+    this.add.image(0, 0, WORLD_KEY).setOrigin(0, 0).setDisplaySize(worldW, worldH);
 
-    // 1) Fill grid with grass.
-    for (let row = 0; row < BOARD.rows; row++) {
-      for (let col = 0; col < BOARD.cols; col++) {
-        placeTile('grass', col, row);
-      }
-    }
-
-    // 2) Decorative scatter — placed BEFORE the path so the path always wins.
-    const decoration: Array<{ col: number; row: number; type: TileType }> = [
-      { col: 0, row: 11, type: 'forest' },
-      { col: 2, row: 11, type: 'forest' },
-      { col: 5, row: 11, type: 'forest' },
-      { col: 13, row: 11, type: 'mountain' },
-      { col: 16, row: 11, type: 'forest' },
-      { col: 0, row: 0, type: 'mountain' },
-      { col: 2, row: 0, type: 'mountain' },
-      { col: 4, row: 0, type: 'mountain' },
-      { col: 15, row: 0, type: 'mountain' },
-      { col: 17, row: 2, type: 'mountain' },
-      { col: 0, row: 5, type: 'forest' },
-      { col: 17, row: 8, type: 'forest' },
-      { col: 6, row: 4, type: 'forest' },
-      { col: 14, row: 8, type: 'forest' },
-      { col: 14, row: 5, type: 'forest' },
-      { col: 0, row: 7, type: 'forest' },
-      { col: 0, row: 3, type: 'mountain' },
-      { col: 16, row: 0, type: 'mountain' },
-    ];
-    const usedByPath = new Set(BOARD_PATH.map((p) => `${p.col},${p.row}`));
-    for (const d of decoration) {
-      if (usedByPath.has(`${d.col},${d.row}`)) continue;
-      placeTile(d.type, d.col, d.row);
-    }
-
-    // 3) Path + landmarks (in board order).
-    BOARD.tiles.forEach((tile, i) => {
-      const pos = BOARD_PATH[i];
-      if (!pos) return;
+    // Subtle highlight on each walkable tile so the route is readable.
+    BOARD_PATH.forEach((p, i) => {
+      const tile = BOARD.tiles[i];
+      if (!tile) return;
+      const cx = p.col * TILE_PX + TILE_PX / 2;
+      const cy = p.row * TILE_PX + TILE_PX / 2;
       const isLandmark =
         tile.type !== 'path' && tile.type !== 'grass' &&
-        tile.type !== 'forest' && tile.type !== 'river' &&
-        tile.type !== 'mountain' && tile.type !== 'bridge';
-      // Always paint a path beneath the route except over water / forest / mountain.
-      if (
-        tile.type !== 'forest' && tile.type !== 'river' &&
-        tile.type !== 'mountain' && tile.type !== 'bridge'
-      ) {
-        placeTile('path', pos.col, pos.row);
-      }
-      if (tile.type !== 'path' && tile.type !== 'grass') {
-        placeTile(tile.type, pos.col, pos.row);
-      }
-      // Marker dots on the path for stepable tiles (subtle).
-      if (!isLandmark && tile.type !== 'bridge' && tile.type !== 'river' && tile.type !== 'mountain' && tile.type !== 'forest') {
-        const dot = this.add.circle(
-          pos.col * tileSize + tileSize / 2,
-          pos.row * tileSize + tileSize / 2,
-          4,
-          tile.challenge ? 0xffc371 : 0xfbf5e1,
-          0.7,
-        );
-        dot.setDepth(2);
-        world.add(dot);
-      }
+        tile.type !== 'castle-start' && tile.type !== 'castle-end' &&
+        tile.type !== 'bridge';
+      if (isLandmark) return; // landmark is already visually obvious
+      const dot = this.add.circle(
+        cx,
+        cy + TILE_PX * 0.32,
+        4,
+        tile.challenge ? 0xffc371 : 0xfbf5e1,
+        0.85,
+      );
+      dot.setStrokeStyle(1, 0x1a1a1a, 0.7);
+      dot.setDepth(2);
     });
 
-    // 4) Player.
+    // Player.
+    const startPos = BOARD_PATH[this.currentIndex];
     this.player = this.add.sprite(
-      this.playerCol * tileSize + tileSize / 2,
-      this.playerRow * tileSize + tileSize / 2,
+      startPos.col * TILE_PX + TILE_PX / 2,
+      startPos.row * TILE_PX + TILE_PX / 2,
       'p-idle',
     );
-    this.player.setDisplaySize(tileSize * 0.85, tileSize * 0.85);
+    this.player.setDisplaySize(TILE_PX * 0.9, TILE_PX * 0.9);
     this.player.setDepth(50);
-    this.tweens.add({
-      targets: this.player,
-      y: this.player.y - 4,
-      yoyo: true,
-      repeat: -1,
-      ease: 'sine.inOut',
-      duration: 700,
-    });
+    this.startIdleAnim();
 
-    // 5) Camera setup.
+    // Camera setup — strict bounds, no over-pan beyond the world edges.
     this.cameras.main.setBackgroundColor('#1f4527');
-    this.cameras.main.setBounds(0, 0, BOARD.cols * tileSize, BOARD.rows * tileSize);
-    this.cameras.main.startFollow(this.player, true, 0.15, 0.15);
+    this.cameras.main.setBounds(0, 0, worldW, worldH);
+    this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
+    this.cameras.main.setRoundPixels(true);
     this.cameras.main.setZoom(this.computeZoom());
 
     this.scale.on('resize', this.handleResize, this);
@@ -203,19 +158,39 @@ export class WorldScene extends Phaser.Scene {
       gameBus.off(GAME_EVENTS.STEP, this.handleStep, this);
       gameBus.off(GAME_EVENTS.TELEPORT, this.handleTeleport, this);
       gameBus.off(GAME_EVENTS.AVATAR_CHANGED, this.handleAvatarChanged, this);
+      this.playerIdleTween?.stop();
+      this.playerWalkTween?.stop();
     });
 
     gameBus.emit(GAME_EVENTS.READY);
   }
 
+  private startIdleAnim() {
+    this.playerIdleTween?.stop();
+    this.player.setTexture('p-idle');
+    this.playerIdleTween = this.tweens.add({
+      targets: this.player,
+      y: this.player.y - 4,
+      yoyo: true,
+      repeat: -1,
+      ease: 'sine.inOut',
+      duration: 700,
+    });
+  }
+
   private computeZoom(): number {
     const { width, height } = this.scale.gameSize;
-    const worldW = BOARD.cols * BOARD.tileSize;
-    const worldH = BOARD.rows * BOARD.tileSize;
-    const zx = width / worldW;
-    const zy = height / worldH;
-    const zoom = Math.min(zx, zy) * 1.4;
-    return Phaser.Math.Clamp(zoom, 0.45, 1.6);
+    const worldW = BOARD.cols * TILE_PX;
+    const worldH = BOARD.rows * TILE_PX;
+    const fitX = width / worldW;
+    const fitY = height / worldH;
+    // We zoom in more aggressively than "fit" so the tiles are large and
+    // readable, but clamp to keep at least 6×4 tiles visible.
+    const idealTilesAcross = 9;
+    const targetZoom = width / (idealTilesAcross * TILE_PX);
+    const minZoom = Math.max(fitX, fitY) * 1.05;
+    const maxZoom = Math.max(fitX, fitY) * 3.5;
+    return Phaser.Math.Clamp(targetZoom, minZoom, maxZoom);
   }
 
   private handleResize() {
@@ -225,63 +200,89 @@ export class WorldScene extends Phaser.Scene {
   private handleAvatarChanged(avatarId: AvatarId) {
     if (this.avatarId === avatarId) return;
     this.avatarId = avatarId;
-    this.rebuildPlayerTexture(avatarId);
-    if (this.player) this.player.setTexture('p-idle');
+    this.rebuildPlayerTextures(avatarId);
+    this.player?.setTexture('p-idle');
   }
 
+  /** React tells us the new target index. We never accept invalid indices. */
   private handleStep(targetIndex: number) {
-    if (this.moving) {
-      this.time.delayedCall(220, () => this.handleStep(targetIndex));
+    const clamped = Math.max(0, Math.min(BOARD.total - 1, targetIndex | 0));
+    this.targetIndex = clamped;
+    this.advance();
+  }
+
+  /** Hop one tile toward the target. Recurses through the tween's onComplete. */
+  private advance() {
+    if (this.moving) return;
+    if (this.currentIndex === this.targetIndex) {
+      // Arrival.
+      if (this.targetIndex === BOARD.total - 1) {
+        this.spawnPrincess();
+        gameBus.emit(GAME_EVENTS.VICTORY);
+      }
       return;
     }
-    const pos = BOARD_PATH[targetIndex];
+
+    // Always move TOWARD the target — never random or backward unless
+    // explicitly requested (resets use handleTeleport instead).
+    const next =
+      this.currentIndex < this.targetIndex
+        ? this.currentIndex + 1
+        : this.currentIndex - 1;
+    const pos = BOARD_PATH[next];
     if (!pos) return;
+
     this.moving = true;
-    this.currentIndex = targetIndex;
+    this.playerIdleTween?.stop();
     this.player.setTexture('p-walk');
-    this.tweens.add({
+
+    const targetX = pos.col * TILE_PX + TILE_PX / 2;
+    const targetY = pos.row * TILE_PX + TILE_PX / 2;
+
+    this.playerWalkTween = this.tweens.add({
       targets: this.player,
-      x: pos.col * BOARD.tileSize + BOARD.tileSize / 2,
-      y: pos.row * BOARD.tileSize + BOARD.tileSize / 2,
-      duration: 200,
+      x: targetX,
+      y: targetY,
+      duration: STEP_DURATION,
       ease: 'sine.inOut',
       onComplete: () => {
+        this.currentIndex = next;
         this.moving = false;
-        this.player.setTexture('p-idle');
-        this.playerCol = pos.col;
-        this.playerRow = pos.row;
-        if (targetIndex === BOARD.total - 1) {
-          this.spawnPrincess();
-          gameBus.emit(GAME_EVENTS.VICTORY);
+        if (this.currentIndex === this.targetIndex) {
+          this.startIdleAnim();
         }
+        this.advance();
       },
     });
   }
 
   private handleTeleport(targetIndex: number) {
-    const pos = BOARD_PATH[targetIndex];
+    const clamped = Math.max(0, Math.min(BOARD.total - 1, targetIndex | 0));
+    const pos = BOARD_PATH[clamped];
     if (!pos) return;
-    this.currentIndex = targetIndex;
-    this.player.x = pos.col * BOARD.tileSize + BOARD.tileSize / 2;
-    this.player.y = pos.row * BOARD.tileSize + BOARD.tileSize / 2;
-    this.playerCol = pos.col;
-    this.playerRow = pos.row;
+    this.playerWalkTween?.stop();
+    this.moving = false;
+    this.currentIndex = clamped;
+    this.targetIndex = clamped;
+    this.player.x = pos.col * TILE_PX + TILE_PX / 2;
+    this.player.y = pos.row * TILE_PX + TILE_PX / 2;
     if (this.princess) {
       this.princess.destroy();
       this.princess = undefined;
     }
+    this.startIdleAnim();
   }
 
   private spawnPrincess() {
     if (this.princess) return;
     const last = BOARD_PATH[BOARD.total - 1];
     this.princess = this.add.image(
-      last.col * BOARD.tileSize + BOARD.tileSize / 2,
-      last.row * BOARD.tileSize + BOARD.tileSize - 6,
+      last.col * TILE_PX + TILE_PX / 2 + 16,
+      last.row * TILE_PX + TILE_PX / 2 + 18,
       PRINCESS_KEY,
     );
     this.princess.setDepth(60);
-    this.princess.setDisplaySize(BOARD.tileSize * 0.7, BOARD.tileSize * 0.7);
+    this.princess.setDisplaySize(TILE_PX * 0.7, TILE_PX * 0.7);
     this.tweens.add({
       targets: this.princess,
       y: this.princess.y - 6,

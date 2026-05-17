@@ -41,7 +41,8 @@ export type TileType =
   | 'grass'
   | 'forest'
   | 'bridge'
-  | 'river'
+  | 'river-horizontal'
+  | 'river-vertical'
   | 'mountain'
   | 'village'
   | 'house'
@@ -50,7 +51,12 @@ export type TileType =
   | 'library'
   | 'fountain'
   | 'castle-start'
-  | 'castle-end';
+  | 'castle-end'
+  | 'dragon'
+  | 'wizard'
+  | 'knight'
+  | 'flowers'
+  | 'sign';
 
 export interface BoardTile {
   index: number;

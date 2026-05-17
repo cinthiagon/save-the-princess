@@ -376,6 +376,62 @@ export const CHALLENGES: Challenge[] = [
     correctId: 'b',
     explanation: 'Two horses are plural → "there were".',
   },
+  {
+    id: 'past-011',
+    category: 'past',
+    type: 'multiple-choice',
+    prompt: 'Long ago, __________ a friendly wizard near the village.',
+    options: [
+      { id: 'a', text: 'there was' },
+      { id: 'b', text: 'there were' },
+      { id: 'c', text: 'there wasn\u2019t' },
+      { id: 'd', text: 'there weren\u2019t' },
+    ],
+    correctId: 'a',
+    explanation: 'One wizard (singular) → "there was".',
+  },
+  {
+    id: 'past-012',
+    category: 'past',
+    type: 'multiple-choice',
+    prompt: 'Last summer, __________ two brave knights at the bridge.',
+    options: [
+      { id: 'a', text: 'there was' },
+      { id: 'b', text: 'there were' },
+      { id: 'c', text: 'there wasn\u2019t' },
+      { id: 'd', text: 'there weren\u2019t' },
+    ],
+    correctId: 'b',
+    explanation: 'Two knights → plural → "there were".',
+  },
+  {
+    id: 'dir-011',
+    category: 'directions',
+    type: 'multiple-choice',
+    prompt: 'A red dragon is sleeping in the mountains, on the right side of the castle. The dragon is __________ the castle.',
+    options: [
+      { id: 'a', text: 'next to' },
+      { id: 'b', text: 'opposite' },
+      { id: 'c', text: 'between' },
+      { id: 'd', text: 'inside' },
+    ],
+    correctId: 'a',
+    explanation: 'On the right side of the castle = "next to" the castle.',
+  },
+  {
+    id: 'loc-007',
+    category: 'location',
+    type: 'multiple-choice',
+    prompt: 'A kind knight stands outside the village. The knight is __________ the village hall.',
+    options: [
+      { id: 'a', text: 'in front of' },
+      { id: 'b', text: 'inside' },
+      { id: 'c', text: 'on top of' },
+      { id: 'd', text: 'between' },
+    ],
+    correctId: 'a',
+    explanation: 'Standing outside, facing the door → "in front of" the building.',
+  },
 ];
 
 /** Convenience helpers. */

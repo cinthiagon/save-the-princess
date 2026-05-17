@@ -24,6 +24,34 @@ export const MiniMap = ({ position }: MiniMapProps) => {
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img" aria-hidden="true">
         <rect width={W} height={H} rx={6} fill="#1f4527" />
+        {/* Mountains border */}
+        {BOARD.decorations
+          .filter((d) => d.type === 'mountain')
+          .map((d, i) => (
+            <rect
+              key={`m-${i}`}
+              x={d.col * BOARD.tileSize * sx}
+              y={d.row * BOARD.tileSize * sy}
+              width={BOARD.tileSize * sx}
+              height={BOARD.tileSize * sy}
+              fill="#6f6f6f"
+              opacity={0.55}
+            />
+          ))}
+        {/* Forest blobs */}
+        {BOARD.decorations
+          .filter((d) => d.type === 'forest')
+          .map((d, i) => (
+            <rect
+              key={`f-${i}`}
+              x={d.col * BOARD.tileSize * sx}
+              y={d.row * BOARD.tileSize * sy}
+              width={BOARD.tileSize * sx}
+              height={BOARD.tileSize * sy}
+              fill="#3f7d4a"
+              opacity={0.55}
+            />
+          ))}
         {/* Path */}
         <polyline
           points={BOARD_PATH.map(
@@ -42,10 +70,21 @@ export const MiniMap = ({ position }: MiniMapProps) => {
           const cx = (p.col + 0.5) * BOARD.tileSize * sx;
           const cy = (p.row + 0.5) * BOARD.tileSize * sy;
           if (t.type === 'castle-end') {
-            return <circle key={i} cx={cx} cy={cy} r={5} fill="#ffd066" stroke="#1a1a1a" strokeWidth={1} />;
+            return (
+              <g key={i}>
+                <circle cx={cx} cy={cy} r={6} fill="#ffd066" stroke="#1a1a1a" strokeWidth={1} />
+                <text x={cx} y={cy + 2} textAnchor="middle" fontSize={7} fill="#1a1a1a">C</text>
+              </g>
+            );
           }
           if (t.type === 'castle-start') {
             return <circle key={i} cx={cx} cy={cy} r={4} fill="#5fa463" stroke="#1a1a1a" strokeWidth={1} />;
+          }
+          if (t.type === 'bakery' || t.type === 'library' || t.type === 'market' || t.type === 'fountain' || t.type === 'village') {
+            return <rect key={i} x={cx - 3} y={cy - 3} width={6} height={6} fill="#d8425a" stroke="#1a1a1a" strokeWidth={0.5} />;
+          }
+          if (t.type === 'bridge') {
+            return <rect key={i} x={cx - 3} y={cy - 2} width={6} height={4} fill="#8a5a3b" stroke="#1a1a1a" strokeWidth={0.5} />;
           }
           if (t.challenge) {
             return <circle key={i} cx={cx} cy={cy} r={2.2} fill="#ffc371" />;
@@ -58,11 +97,7 @@ export const MiniMap = ({ position }: MiniMapProps) => {
           if (!p) return null;
           const cx = (p.col + 0.5) * BOARD.tileSize * sx;
           const cy = (p.row + 0.5) * BOARD.tileSize * sy;
-          return (
-            <g>
-              <circle cx={cx} cy={cy} r={5} fill="#d8425a" stroke="#fbf5e1" strokeWidth={1.5} />
-            </g>
-          );
+          return <circle cx={cx} cy={cy} r={5} fill="#d8425a" stroke="#fbf5e1" strokeWidth={1.5} />;
         })()}
       </svg>
     </div>
