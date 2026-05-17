@@ -1,0 +1,97 @@
+/*
+ * Project developed by Cinthia Gonçalez
+ * Educational project for elementary school English students
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light dark;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: 'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+body {
+  background: radial-gradient(circle at 20% 10%, #3f7d4a 0%, #1f4527 55%, #0f2a18 100%);
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@layer base {
+  :focus-visible {
+    outline: 3px solid #ffc371;
+    outline-offset: 3px;
+    border-radius: 8px;
+  }
+
+  button {
+    font-family: inherit;
+  }
+}
+
+@layer components {
+  .font-pixel {
+    font-family: 'Press Start 2P', monospace;
+    letter-spacing: 0.02em;
+  }
+
+  .btn-pixel {
+    @apply font-pixel uppercase tracking-wider text-xs sm:text-sm;
+    @apply px-5 py-3 rounded-md border-2 border-black/40;
+    @apply shadow-pixel transition-transform active:translate-y-0.5 active:shadow-pixel-sm;
+    @apply focus:outline-none focus-visible:ring-4 focus-visible:ring-sunrise-400/70;
+  }
+
+  .panel-pixel {
+    @apply rounded-xl border-2 border-black/30 shadow-pixel;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.18)),
+      #fbf5e1;
+    color: #2c1f10;
+  }
+
+  .panel-pixel-dark {
+    @apply rounded-xl border-2 border-black/40 shadow-pixel text-parchment-50;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.25)),
+      #1f4527;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold;
+    background: rgba(255, 255, 255, 0.85);
+    color: #1f4527;
+  }
+}
+
+/* Pixel rendering for in-game assets */
+.pixel-img,
+canvas {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Reduce motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
