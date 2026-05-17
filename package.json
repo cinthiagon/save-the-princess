@@ -1,0 +1,53 @@
+{
+  "name": "save-the-princess",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Save the Princess - educational pixel-art adventure game that teaches English directions and past-tense structures (there was / there were).",
+  "author": {
+    "name": "Cinthia Gonçalez",
+    "url": "https://github.com/cinthiagon"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/cinthiagon/save-the-princess",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cinthiagon/save-the-princess.git"
+  },
+  "keywords": [
+    "education",
+    "english",
+    "esl",
+    "pixel-art",
+    "rpg",
+    "phaser",
+    "react",
+    "vite",
+    "kids",
+    "game"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "tsc -b --noEmit"
+  },
+  "dependencies": {
+    "framer-motion": "^11.5.4",
+    "phaser": "^3.85.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.41",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.45",
+    "tailwindcss": "^3.4.10",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.3"
+  }
+}
